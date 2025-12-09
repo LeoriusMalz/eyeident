@@ -3,9 +3,9 @@ package rawData
 import (
 	_ "context"
 	"encoding/json"
+	_ "eyeident/internal/db"
 	"fmt"
 	"log"
-	_ "sensorsProject/internal/db"
 )
 
 type RawData struct {

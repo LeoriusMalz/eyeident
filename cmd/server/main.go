@@ -1,8 +1,8 @@
 package main
 
 import (
+	"eyeident/internal/server"
 	"log"
-	"sensorsProject/internal/server"
 )
 
 func main() {

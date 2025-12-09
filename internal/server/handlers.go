@@ -2,10 +2,10 @@ package server
 
 import (
 	"encoding/json"
+	"eyeident/internal/rawData"
 	"fmt"
 	"html/template"
 	"net/http"
-	"sensorsProject/internal/rawData"
 )
 
 const TEMPLATES = "web/templates"
