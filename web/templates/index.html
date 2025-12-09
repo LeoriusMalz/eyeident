@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Eyeldent</title>
+
+        <link rel="stylesheet" href="../static/main_page.css">
+        <link rel="stylesheet" href="../static/font-awesome-4.7.0/css/font-awesome.css">
+        {{ template "imports" . }}
+    </head>
+
+    <body>
+        <header class="page-header">
+            <nav class="page-header-navigation">
+                <div class="page-header-navigation__logo">
+                    <img src="../static/eyeident_logo.png" alt="">
+                </div>
+                <div class="page-header-navigation__menu">
+                    <a class="page-header-navigation__menu__link" id="users" href="/users" disabled>
+                        Пользователи
+                    </a>
+                    <a class="page-header-navigation__menu__link" id="tasks">
+                        Таски
+                    </a>
+                    <a class="page-header-navigation__menu__link" id="dataset" href="/dataset">
+                        Датасет
+                    </a>
+                </div>
+                <div class="page-header-navigation__logout-button">
+                    <button><i class="fa fa-sign-out"></i></button>
+                </div>
+            </nav>
+        </header>
+
+        {{ template "content" . }}
+
+        <script type="text/javascript" src="../static/scripts/main_page.js"></script>
+    </body>
+</html>

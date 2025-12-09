@@ -1,0 +1,47 @@
+{{ define "imports" }}
+<link rel="stylesheet" href="../static/dataset_page.css">
+{{ end }}
+
+{{ define "content" }}
+<div class="dataset-page">
+    <div class="dataset-page__header">
+        <div class="dataset-page__header__settings">
+            <div class="settings__id setting-block">
+                <label class="settings__header" for="id">id</label>
+                <select multiple class="settings__input__select" id="id" size="1">
+                    <option disabled selected style="display:none;" value="none">Выберите пользователей</option>
+                    <option>3142331425352365</option>
+                    <option>3142331425352365</option>
+                </select>
+            </div>
+
+            <div class="settings__type setting-block">
+                <label class="settings__header" for="type">type</label>
+                <select multiple class="settings__input__select" id="type" size="1">
+                    <option disabled selected style="display:none;" value="none">Выберите метку</option>
+                    <option>sitting</option>
+                    <option>walking</option>
+                    <option>running</option>
+                </select>
+            </div>
+
+            <div class="settings__datetime setting-block">
+                <label class="settings__header" for="start">datetime</label>
+                <div class="settings__datetime-block">
+                    <input class="settings__input__datetime" id="start" type="datetime-local"> -
+                    <input class="settings__input__datetime" id="end" type="datetime-local">
+                </div>
+            </div>
+        </div>
+
+        <div class="dataset-page__header__buttons">
+            <button class="buttons__dataset-button" id="build">Собрать датасет</button>
+            <button class="buttons__dataset-button" id="download">Скачать <i class="fa fa-download"></i></button>
+        </div>
+    </div>
+
+    <div class="dataset-page__preview">
+        Предварительный просмотр
+    </div>
+</div>
+{{ end }}
