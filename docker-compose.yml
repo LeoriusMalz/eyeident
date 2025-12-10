@@ -1,31 +1,28 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:16
-    container_name: sensors_db
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: sensor_base
-    ports:
-      - "5432:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
-
+#  db:
+#    image: postgres:16
+#    container_name: sensors_db
+#    environment:
+#      POSTGRES_USER: admin
+#      POSTGRES_PASSWORD: admin
+#      POSTGRES_DB: sensor_base
+#    ports:
+#      - "5432:5432"
+#    volumes:
+#      - db_data:/var/lib/postgresql/data
   api:
     build: .
-    container_name: sensors_api
+    container_name: eyeident_server
     ports:
       - "8080:8080"
     environment:
       DB_USER: admin
       DB_PASSWORD: admin
-      DB_NAME: sensor_base
-      DB_HOST: db
+      DB_NAME: eyeiden_database
+      DB_HOST: eyeident-db-leorius.db-msk0.amvera.tech
       DB_PORT: 5432
-    depends_on:
-      - db
 
-volumes:
-  db_data:
+#volumes:
+#  db_data:

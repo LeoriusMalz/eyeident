@@ -100,7 +100,7 @@
 
 .element__logs {
     position: absolute;
-    right: 240px;
+    right: 150px;
 }
 
 .element__logs button {
@@ -132,7 +132,7 @@
 
 .element__download-button {
     position: absolute;
-    right: 120px;
+    right: 60px;
     top: 8px;
 }
 

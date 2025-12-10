@@ -1,11 +1,14 @@
 package rawData
 
 import (
+	"context"
 	_ "context"
 	"encoding/json"
+	"eyeident/internal/db"
 	_ "eyeident/internal/db"
 	"fmt"
 	"log"
+	"time"
 )
 
 type RawData struct {
@@ -15,13 +18,25 @@ type RawData struct {
 }
 
 func AddRaw(d RawData) error {
-	fmt.Println(d)
-	log.Println(d)
-
 	rawJson, _ := json.Marshal(d)
 
-	fmt.Println(rawJson)
-	log.Println(string(rawJson))
+	log.Println("Saving RawData:", string(rawJson))
+
+	sqlAddUser, _ := db.LoadQuery("add_user.sql")
+
+	// TODO: убрать потом
+	now := time.Now().Format("2006-01-02 15:04:05")
+
+	_, err := db.DB.Exec(
+		context.Background(),
+		sqlAddUser,
+		d.Data, now, "Success!")
+
+	if err != nil {
+		return fmt.Errorf("failed to insert raw_data: %v", err)
+	}
+
+	log.Println("Saved successful:", string(rawJson))
 
 	//
 	//_, err := db.DB.Exec(

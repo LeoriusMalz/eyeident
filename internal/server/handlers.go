@@ -3,8 +3,8 @@ package server
 import (
 	"encoding/json"
 	"eyeident/internal/rawData"
-	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 )
 
@@ -49,7 +49,7 @@ func (s *Server) SendDataHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(body.Data)
+	log.Println("Received data:", body)
 	if err := rawData.AddRaw(body); err != nil {
 		http.Error(w, "db error", 500)
 		return
