@@ -55,6 +55,7 @@ COPY --from=builder /app/server ./server
 # Копируем static и templates
 COPY web/static ./web/static
 COPY web/templates ./web/templates
+COPY internal ./internal
 
 # Открываем порт
 EXPOSE 80
