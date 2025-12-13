@@ -10,6 +10,11 @@ import (
 	"strings"
 )
 
+type Body struct {
+	Count   string            `json:"count"`
+	Dataset []rawData.Dataset `json:"dataset"`
+}
+
 const TEMPLATES = "web/templates"
 
 func (s *Server) IndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -64,23 +69,31 @@ func (s *Server) GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 func (s *Server) GetDatasetHandler(w http.ResponseWriter, r *http.Request) {
 	startDate, _ := strconv.ParseInt(r.URL.Query().Get("startDate"), 10, 64)
 	endDate, _ := strconv.ParseInt(r.URL.Query().Get("endDate"), 10, 64)
-	//ids := strings.Split(r.URL.Query().Get("id"), ",")
-	//types := strings.Split(r.URL.Query().Get("type"), ",")
 	ids := strings.Split(r.URL.Query().Get("id"), ",")
 	types := strings.Split(r.URL.Query().Get("type"), ",")
 
 	log.Println(startDate, endDate, ids, types)
-	dataset, err := rawData.GetDataset(ids, types, startDate, endDate)
+	cnt, err := rawData.GetDataset(ids, types, startDate, endDate, "/data/dataset.csv")
 	if err != nil {
-		http.Error(w, "Error getting dataset", http.StatusInternalServerError)
+		http.Error(w, "Error getting dataset:"+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	dataset, err := rawData.ReadCSVPreview("/data/dataset.csv", 10)
+	if err != nil {
+		log.Println("Error reading preview:" + err.Error())
+		http.Error(w, "Error reading preview"+err.Error(), 500)
+		return
+	}
+
+	var body = Body{cnt, dataset}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	err = json.NewEncoder(w).Encode(dataset)
+	err = json.NewEncoder(w).Encode(body)
 	if err != nil {
+		log.Println("Error sending dataset:" + err.Error())
 		http.Error(w, "Error dataset encoding", http.StatusInternalServerError)
 		return
 	}
@@ -142,6 +155,23 @@ func (s *Server) SendDataHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 	_, err := w.Write([]byte("ok"))
 	if err != nil {
+		return
+	}
+}
+
+func (s *Server) GetDatasetParamsHandler(w http.ResponseWriter, r *http.Request) {
+	params, err := rawData.GetParams()
+	if err != nil {
+		http.Error(w, "Error getting params", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	err = json.NewEncoder(w).Encode(params)
+	if err != nil {
+		http.Error(w, "Error params encoding", http.StatusInternalServerError)
 		return
 	}
 }

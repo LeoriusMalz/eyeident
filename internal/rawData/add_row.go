@@ -3,11 +3,15 @@ package rawData
 import (
 	"context"
 	_ "context"
+	"encoding/csv"
 	"encoding/json"
 	"eyeident/internal/db"
 	_ "eyeident/internal/db"
 	"fmt"
 	"log"
+	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -15,23 +19,28 @@ import (
 	_ "github.com/jackc/pgx/v5/pgtype"
 )
 
+type Params struct {
+	Id   []string `json:"id"`
+	Type []string `json:"type"`
+}
+
 type Dataset struct {
-	Id        string
-	Timestamp int64
-	Type      string
-	AccelX    float32
-	AccelY    float32
-	AccelZ    float32
-	GyroX     float32
-	GyroY     float32
-	GyroZ     float32
-	QX        float32
-	QY        float32
-	QZ        float32
-	QW        float32
-	Yaw       float32
-	Pitch     float32
-	Roll      float32
+	Id        string  `json:"id"`
+	Timestamp int64   `json:"timestamp"`
+	Type      string  `json:"type"`
+	AccelX    float32 `json:"accel_x"`
+	AccelY    float32 `json:"accel_y"`
+	AccelZ    float32 `json:"accel_z"`
+	GyroX     float32 `json:"gyro_x"`
+	GyroY     float32 `json:"gyro_y"`
+	GyroZ     float32 `json:"gyro_z"`
+	QX        float32 `json:"qx"`
+	QY        float32 `json:"qy"`
+	QZ        float32 `json:"qz"`
+	QW        float32 `json:"qw"`
+	Yaw       float32 `json:"yaw"`
+	Pitch     float32 `json:"pitch"`
+	Roll      float32 `json:"roll"`
 }
 
 type UserData struct {
@@ -203,40 +212,191 @@ func Add2RawSet(p SensorPacket) error {
 	return err
 }
 
-func GetDataset(id []string, types []string, time1 int64, time2 int64) ([]Dataset, error) {
-	log.Println("Generating dataset...")
+func GetDataset(ids []string, types []string, time1 int64, time2 int64, outputPath string) (string, error) {
+	if len(ids) == 0 || len(types) == 0 {
+		return "", fmt.Errorf("ids and types must not be empty")
+	}
+
+	ctx := context.Background()
+
+	log.Println("Start getting dataset...")
+
+	conn, err := db.DB.Acquire(ctx)
+	if err != nil {
+		log.Println("Error acquiring connection", err)
+		return "", err
+	}
+	defer conn.Release()
+
+	file, err := os.Create(outputPath)
+	if err != nil {
+		log.Println("Error creating file", err)
+		return "", err
+	}
+	defer file.Close()
+
+	log.Println("Temp file created!")
+	log.Println("Forming SQL query!")
+
+	idList := make([]string, len(ids))
+	for i, v := range ids {
+		idList[i] = fmt.Sprintf("'%s'", v)
+	}
+
+	typeList := make([]string, len(types))
+	for i, v := range types {
+		typeList[i] = fmt.Sprintf("'%s'", v)
+	}
 
 	sqlGetDataset, _ := db.LoadQuery("generate_dataset.sql")
 
-	rows, err := db.DB.Query(
-		context.Background(),
-		sqlGetDataset,
-		id, types, time1, time2)
+	sql := fmt.Sprintf(sqlGetDataset,
+		strings.Join(idList, ","),
+		strings.Join(typeList, ","),
+		time1,
+		time2,
+	)
 
+	log.Println("SQL formed successfully!")
+
+	countCT, err := conn.Conn().PgConn().CopyTo(ctx, file, sql)
 	if err != nil {
-		log.Fatalln("Error generating dataset", err)
-		return nil, fmt.Errorf("failed to generate dataset: %v", err)
+		log.Println("Error copying to file", err)
+		return "", err
 	}
-	defer rows.Close()
+	//var count, _ = strconv.ParseInt(countCT.String(), 10, 64)
 
-	var dataset []Dataset
+	log.Println("Dataset saved successfully! Amount of rows =", countCT.String())
 
-	for rows.Next() {
-		var d Dataset
+	return countCT.String(), nil
+}
 
-		if err := rows.Scan(&d.Id, &d.Timestamp, &d.Type,
-			&d.AccelX, &d.AccelY, &d.AccelZ,
-			&d.GyroX, &d.GyroY, &d.GyroZ,
-			&d.QX, &d.QY, &d.QZ, &d.QW,
-			&d.Yaw, &d.Pitch, &d.Roll); err != nil {
-			log.Fatalln("Error parsing dataset", err)
+func ReadCSVPreview(path string, limit int) ([]Dataset, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		log.Println("Error opening file", err)
+		return nil, err
+	}
+	defer file.Close()
+
+	reader := csv.NewReader(file)
+
+	// читаем header
+	_, err = reader.Read()
+	if err != nil {
+		log.Println("Error reading file", err)
+		return nil, fmt.Errorf("cannot read csv header: %w", err)
+	}
+
+	var result []Dataset
+
+	for i := 0; i < limit; i++ {
+		record, err := reader.Read()
+		if err != nil {
+			break
+		}
+
+		row, err := parseDatasetRow(record)
+		if err != nil {
+			log.Println("Error parsing dataset row", err)
 			return nil, err
 		}
 
-		dataset = append(dataset, d)
+		result = append(result, row)
 	}
-	log.Println("Generated dataset successfully! Rows amount =", len(dataset))
-	dataset = dataset[:100]
 
-	return dataset, rows.Err()
+	return result, nil
+}
+
+func parseDatasetRow(r []string) (Dataset, error) {
+	if len(r) < 16 {
+		return Dataset{}, fmt.Errorf("invalid csv row length")
+	}
+
+	ts, _ := strconv.ParseInt(r[1], 10, 64)
+
+	parse := func(s string) float32 {
+		v, _ := strconv.ParseFloat(s, 32)
+		return float32(v)
+	}
+
+	return Dataset{
+		Id:        r[0],
+		Timestamp: ts,
+		Type:      r[2],
+
+		AccelX: parse(r[3]),
+		AccelY: parse(r[4]),
+		AccelZ: parse(r[5]),
+
+		GyroX: parse(r[6]),
+		GyroY: parse(r[7]),
+		GyroZ: parse(r[8]),
+
+		QX: parse(r[9]),
+		QY: parse(r[10]),
+		QZ: parse(r[11]),
+		QW: parse(r[12]),
+
+		Yaw:   parse(r[13]),
+		Pitch: parse(r[14]),
+		Roll:  parse(r[15]),
+	}, nil
+}
+
+func GetParams() (Params, error) {
+	log.Println("Getting params...")
+
+	sqlGetParamsId, _ := db.LoadQuery("get_ids.sql")
+	sqlGetParamsType, _ := db.LoadQuery("get_types.sql")
+
+	rows1, err := db.DB.Query(
+		context.Background(),
+		sqlGetParamsId)
+	if err != nil {
+		log.Println("Error getting params", err)
+		return Params{}, fmt.Errorf("failed to get params: %v", err)
+	}
+	defer rows1.Close()
+
+	rows2, err := db.DB.Query(
+		context.Background(),
+		sqlGetParamsType)
+	if err != nil {
+		log.Println("Error getting params", err)
+		return Params{}, fmt.Errorf("failed to get params: %v", err)
+	}
+	defer rows2.Close()
+
+	var ids []string
+	var types []string
+
+	for rows1.Next() {
+		var id string
+
+		if err := rows1.Scan(&id); err != nil {
+			log.Println("Error parsing ids", err)
+			return Params{}, err
+		}
+
+		ids = append(ids, id)
+	}
+
+	for rows2.Next() {
+		var typee string
+
+		if err := rows2.Scan(&typee); err != nil {
+			log.Println("Error parsing types", err)
+			return Params{}, err
+		}
+
+		types = append(types, typee)
+	}
+
+	log.Println("Got params successfully!")
+
+	return Params{
+		Id:   ids,
+		Type: types,
+	}, nil
 }

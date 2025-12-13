@@ -26,6 +26,7 @@ func (s *Server) registerRoutes() {
 
 	r.Get("/api/get_users", s.GetUsersHandler)
 	r.Get("/api/get_dataset", s.GetDatasetHandler)
+	r.Get("/api/get_params", s.GetDatasetParamsHandler)
 	r.Post("/api/connect", s.ConnectUserHandler)
 	r.Post("/api/disconnect", s.DisconnectUserHandler)
 	r.Post("/api/send_data", s.SendDataHandler)
