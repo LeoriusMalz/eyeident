@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS raw_data (
     id          TEXT            NOT NULL,
-    datetime    BIGINT          NOT NULL CHECK(datetime > 0),
+    "timestamp" BIGINT          NOT NULL CHECK("timestamp" > 0),
     "type"      VARCHAR(15),
 
     accelX      REAL,
@@ -19,22 +19,19 @@ CREATE TABLE IF NOT EXISTS raw_data (
     gyroY       REAL,
     gyroZ       REAL,
 
-    azimutX     NUMERIC(5, 2),
-    azimutY     NUMERIC(5, 2),
-    azimutZ     NUMERIC(5, 2),
-    cos         NUMERIC(4, 3),
-
     qX          NUMERIC(4, 3),
     qY          NUMERIC(4, 3),
     qZ          NUMERIC(4, 3),
     qW          NUMERIC(4, 3),
 
-    PRIMARY KEY (id, datetime)
+    yaw         NUMERIC(5, 2),
+    pitch       NUMERIC(5, 2),
+    roll        NUMERIC(5, 2)
 );
 
 CREATE TABLE IF NOT EXISTS dataset (
     id          TEXT            NOT NULL,
-    datetime    BIGINT          NOT NULL CHECK(datetime > 0),
+    "timestamp" BIGINT          NOT NULL CHECK("timestamp" > 0),
     "type"      VARCHAR(15),
 
     accelX      REAL,
@@ -45,15 +42,12 @@ CREATE TABLE IF NOT EXISTS dataset (
     gyroY       REAL,
     gyroZ       REAL,
 
-    azimutX     NUMERIC(5, 2),
-    azimutY     NUMERIC(5, 2),
-    azimutZ     NUMERIC(5, 2),
-    cos         NUMERIC(4, 3),
-
     qX          NUMERIC(4, 3),
     qY          NUMERIC(4, 3),
     qZ          NUMERIC(4, 3),
     qW          NUMERIC(4, 3),
 
-    PRIMARY KEY (id, datetime)
+    yaw         NUMERIC(5, 2),
+    pitch       NUMERIC(5, 2),
+    roll        NUMERIC(5, 2)
 );

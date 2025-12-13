@@ -23,7 +23,12 @@ func (s *Server) registerRoutes() {
 	r.Get("/", s.IndexHandler)
 	r.Get("/users", s.UsersHandler)
 	r.Get("/dataset", s.DatasetHandler)
-	r.Post("/send_data", s.SendDataHandler)
+
+	r.Get("/api/get_users", s.GetUsersHandler)
+	r.Get("/api/get_dataset", s.GetDatasetHandler)
+	r.Post("/api/connect", s.ConnectUserHandler)
+	r.Post("/api/disconnect", s.DisconnectUserHandler)
+	r.Post("/api/send_data", s.SendDataHandler)
 
 	// статика
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
