@@ -3,13 +3,31 @@ const userListTable = document.querySelector(".users-list__table");
 async function getUsers() {
     const data = await request("/api/get_users");
     data.forEach(user => {
-        console.log(user['LastCommit']);
         user['LastCommit'] = getLastCommit(user['LastCommit'])
         addUserCell(user);
-
-        console.log(user);
     });
-    console.log(data);
+
+    const pauseButtons = document.querySelectorAll(".pause-button");
+    pauseButtons.forEach(button => {
+        button.addEventListener('click', async (e) => {
+            const icon = button.querySelector("i");
+            const options = {method: 'POST',};
+
+            if (icon.classList.contains("fa-pause")) {
+                icon.classList.remove("fa-pause");
+                icon.classList.add("fa-play");
+                button.title = 'Запустить сбор';
+
+                await request(`/api/change_user_disable?id=${button.parentElement.parentElement.id}`, options);
+            } else {
+                icon.classList.remove("fa-play");
+                icon.classList.add("fa-pause");
+                button.title = 'Приостановить сбор';
+
+                await request(`/api/change_user_enable?id=${button.parentElement.parentElement.id}`, options);
+            }
+        });
+    });
 }
 
 function getLastCommit(lastCommit) {

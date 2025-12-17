@@ -10,7 +10,7 @@
 
     width: 90%;
 
-    font-family: "VK Sans Display", serif;
+    font-family: "VK Sans Display", sans-serif;
     font-weight: bold;
     font-size: 25px;
 }
@@ -40,7 +40,7 @@
     height: auto;
     top: 20px;
 
-    font-family: "VK Sans Display", serif;
+    font-family: "VK Sans Display", sans-serif;
     font-weight: normal;
     font-size: 22px;
 }
@@ -111,7 +111,7 @@
     border-radius: 12px;
     background: #2455b1;
 
-    font-family: "VK Sans Display", serif;
+    font-family: "VK Sans Display", sans-serif;
     font-weight: bold;
     font-size: 20px;
     color: whitesmoke;

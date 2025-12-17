@@ -29,37 +29,30 @@
 #CMD ["./server"]
 
 
-# Сборка Go
 FROM golang:1.25.5 AS builder
 
 WORKDIR /app
 
-# Копируем go.mod и go.sum
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Копируем весь проект
 COPY . .
 
-# Собираем бинарник
 RUN CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/server
 
-# Образ
 FROM alpine:latest
 
 WORKDIR /app
 
-# Копируем бинарник
+
 COPY --from=builder /app/server ./server
 
-# Копируем static и templates
 COPY web/static ./web/static
 COPY web/templates ./web/templates
 COPY internal ./internal
+#COPY data ./data
 
-# Открываем порт
 EXPOSE 80
 EXPOSE 8080
 
-# Запускаем
 CMD ["./server", "--port", "8080"]

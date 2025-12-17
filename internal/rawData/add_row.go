@@ -70,6 +70,7 @@ type Quaternion struct {
 
 type SensorSample struct {
 	Timestamp int64      `json:"timestamp"`
+	Type      string     `json:"type"`
 	Accel     Vector3    `json:"acc"`
 	Gyro      Vector3    `json:"gyro"`
 	Quat      Quaternion `json:"quat"`
@@ -134,10 +135,45 @@ func RemoveUser(d UserData) error {
 	return nil
 }
 
+func GetUserEnable(p SensorPacket) (bool, error) {
+	sqlGetUserEnable, _ := db.LoadQuery("get_user_enable.sql")
+
+	rows, _ := db.DB.Query(
+		context.Background(),
+		sqlGetUserEnable,
+		p.Id)
+	defer rows.Close()
+
+	fmt.Println(rows)
+
+	var enabled bool
+	for rows.Next() {
+		if err := rows.Scan(&enabled); err != nil {
+			log.Fatalln("Error parsing users", err)
+			return false, err
+		}
+	}
+	if !enabled {
+		log.Println("Collecting for", p.Id, "is disabled!")
+	}
+
+	return enabled, nil
+}
+
 func GetUsers() ([]User, error) {
 	log.Println("Getting users...")
 
 	sqlGetUser, _ := db.LoadQuery("get_user.sql")
+	sqlUpdateUser, _ := db.LoadQuery("update_user.sql")
+
+	now := (time.Now().UTC().Add(time.Hour * 3)).Format("2006-01-02 15:04:05")
+	_, err := db.DB.Exec(
+		context.Background(),
+		sqlUpdateUser,
+		now, "User diconnected!")
+	if err != nil {
+		return nil, fmt.Errorf("failed to disconnect user: %v", err)
+	}
 
 	rows, err := db.DB.Query(
 		context.Background(),
@@ -175,7 +211,7 @@ func Add2RawSet(p SensorPacket) error {
 
 	for _, s := range p.Samples {
 		batch.Queue(sqlAdd2Raw,
-			p.Id, s.Timestamp, "test",
+			p.Id, s.Timestamp, s.Type,
 			s.Accel.X, s.Accel.Y, s.Accel.Z,
 			s.Gyro.X, s.Gyro.Y, s.Gyro.Z,
 			s.Quat.X, s.Quat.Y, s.Quat.Z, s.Quat.W,
@@ -212,7 +248,7 @@ func Add2RawSet(p SensorPacket) error {
 	return err
 }
 
-func GetDataset(ids []string, types []string, time1 int64, time2 int64, outputPath string) (string, error) {
+func GetDataset(ids []string, types []string, time1 int64, time2 int64, limit int64, outputPath string) (string, error) {
 	if len(ids) == 0 || len(types) == 0 {
 		return "", fmt.Errorf("ids and types must not be empty")
 	}
@@ -255,6 +291,7 @@ func GetDataset(ids []string, types []string, time1 int64, time2 int64, outputPa
 		strings.Join(typeList, ","),
 		time1,
 		time2,
+		limit,
 	)
 
 	log.Println("SQL formed successfully!")
@@ -399,4 +436,28 @@ func GetParams() (Params, error) {
 		Id:   ids,
 		Type: types,
 	}, nil
+}
+
+func ChangeAble(id string, mode string) error {
+	log.Println("Change able...")
+
+	var sqlAbleUser string
+	if mode == "enable" {
+		sqlAbleUser, _ = db.LoadQuery("enable_user.sql")
+	} else {
+		sqlAbleUser, _ = db.LoadQuery("disable_user.sql")
+	}
+
+	_, err := db.DB.Exec(
+		context.Background(),
+		sqlAbleUser,
+		id)
+
+	if err != nil {
+		return fmt.Errorf("failed to change user able: %v", err)
+	}
+
+	log.Println("User disable/enable successful")
+
+	return nil
 }

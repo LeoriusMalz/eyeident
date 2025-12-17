@@ -2,9 +2,10 @@ const inputSelectId = document.querySelector(".settings__input__select#id");
 const inputSelectType = document.querySelector(".settings__input__select#type");
 const inputDatetimeStart = document.querySelector(".settings__input__datetime#start");
 const inputDatetimeEnd = document.querySelector(".settings__input__datetime#end");
+const inputLimit = document.querySelector(".settings__input__limit")
 
 const buildDatasetButton = document.querySelector(".buttons__dataset-button#build");
-// const downloadDatasetButton = document.querySelector(".buttons__dataset-button#download");
+const downloadDatasetButton = document.querySelector(".buttons__dataset-button#download");
 
 const loadingLayout = document.querySelector(".dataset-loading-layout");
 const datasetAmount = document.querySelector(".preview__amount");
@@ -117,6 +118,8 @@ buildDatasetButton.addEventListener('click', async () => {
     let startDate = new Date(inputDatetimeStart.value).getTime();
     let endDate = new Date(inputDatetimeEnd.value).getTime();
 
+    let limit = inputLimit.value;
+
     if (ids === null || ids === "") {ids = IDS.toString();}
     if (types === null || types === "") {types = TYPES.toString();}
 
@@ -127,7 +130,7 @@ buildDatasetButton.addEventListener('click', async () => {
     datasetLabel.textContent = "Сборка датасета...";
     datasetLabel.style.display = 'flex';
 
-    const url = `/api/get_dataset?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&id=${encodeURIComponent(ids)}&type=${encodeURIComponent(types)}`;
+    const url = `/api/get_dataset?startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}&id=${encodeURIComponent(ids)}&type=${encodeURIComponent(types)}&limit=${limit}`;
 
     const data = await request(url);
 
@@ -138,6 +141,11 @@ buildDatasetButton.addEventListener('click', async () => {
 
     datasetLabel.textContent = "Предварительный просмотр";
 });
+
+downloadDatasetButton.addEventListener('click', async () => {
+    window.location.href = "/api/download_dataset";
+    // await request("api/download_dataset");
+})
 
 document.addEventListener('DOMContentLoaded', async function () {
     const params = await getParams();
